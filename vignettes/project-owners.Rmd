@@ -1,0 +1,171 @@
+---
+title: "Project Owners"
+author: "Matthew Cornell"
+date: "2019-05-16"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Project Owners}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message=FALSE, 
+  warning=FALSE,
+  eval = nzchar(Sys.getenv("IS_DEVELOPMENT_MACHINE"))
+)
+```
+
+
+# Zoltr for Project Owners
+Welcome to the zoltr vignette for project owners and forecasters. You should read this if you are interested in creating
+and managing your own [zoltardata.com](https://www.zoltardata.com/) projects using this package to access them via the 
+Zoltar API. Building on the _Getting Started_ vignette, this one covers deleting and uploading forecasts. Note that
+before starting you should:
+
+- Create an account on [zoltardata.com](https://www.zoltardata.com/).
+- Create a 'sandbox' project with one timezero for testing.
+- Create a model in that project.
+- Edit your [`.Renviron`](https://csgillespie.github.io/efficientR/3-3-r-startup.html#renviron) file:
+    - `USERNAME` and `PASSWORD`: should match your account settings
+    - `PROJECT_NAME` and `MODEL_NAME`: should match your project and model
+    - `TIMEZERO_DATE`: should match your project
+    - `FORECAST_CSV_FILE`: the path of a forecast data file in the format documented in
+      [Zoltar documentation](https://www.zoltardata.com/docs)
+
+
+## Connect to the host and authenticate
+
+To access your project, you'll first need to authenticate via the `zoltar_authenticate()` function. Pass it the username
+and password for your account. Note that currently Zoltar uses a five minute timeout on the underlying JWT tokens used
+under the hood, which means you'll have to re-authenticate after that time.
+
+(Note: Below you will see the host shown as _127.0.0.1:8000_ - this is a temporary one that was used to run this 
+documentation against.)
+
+
+<!-- run but don't show. NB: will run only if above eval=TRUE -->
+```{r setup, include=FALSE}
+library(httr)  # o/w devtools::check() gets `could not find function "POST"` error
+```
+
+
+<!-- run but don't show. NB: will run only if above eval=TRUE -->
+```{r, include=FALSE}
+library(zoltr)
+conn <- new_connection(host = Sys.getenv("HOST"))
+zoltar_authenticate(conn, Sys.getenv("USERNAME"), Sys.getenv("PASSWORD"))
+conn
+```
+
+<!-- show but don't run-->
+```{r, eval=FALSE, include=TRUE}
+library(zoltr)
+conn <- new_connection()
+zoltar_authenticate(conn, Sys.getenv("USERNAME"), Sys.getenv("PASSWORD"))
+conn
+```
+
+
+## Get the sandbox project and model work with and then list its forecasts (if any)
+
+Get the ID of the project named by PROJECT_NAME and then get the ID of that project's model named MODEL_NAME. From the
+model ID, call the `forecasts()` function to get a data.frame of that model's forecasts.
+
+```{r}
+the_projects <- projects(conn)
+project_id <- the_projects[the_projects$name == Sys.getenv("PROJECT_NAME"), 'id']  # integer(0) if not found, which is an invalid project ID
+the_models <- models(conn, project_id)
+model_id <- the_models[the_models$name == Sys.getenv("MODEL_NAME"), 'id']  # integer(0) if not found
+the_forecasts <- forecasts(conn, model_id)
+str(the_forecasts)
+```
+
+
+## Delete the model's existing forecast for TIMEZERO_DATE, if any, first printing its info
+
+Get the forecast for the timezero date specified by TIMEZERO_DATE and then call `delete_forecast()`, if one was found.
+
+```{r}
+timezero_date_str <- Sys.getenv("TIMEZERO_DATE")
+timezero_date <- as.Date(timezero_date_str, format = "%Y%m%d")  # YYYYMMDD
+existing_forecast_id <- the_forecasts[the_forecasts$timezero_date == timezero_date, 'id']
+
+the_forecast_info <- forecast_info(conn, existing_forecast_id)  # `Not Found (HTTP 404)` this if forecast doesn't exist 
+str(the_forecast_info)
+
+delete_forecast(conn, the_forecast_info$id)
+```
+
+
+## Upload a forecast
+
+Now let's upload the forecast data file FORECAST_CSV_FILE for TIMEZERO_DATE via the `upload_forecast()` function.
+
+Keep in mind that Zoltar queues long operations like forecast uploading, which keeps the site responsive, but makes the
+Zoltar API a little more complicated. Rather than having the `upload_forecast()` function _block_ until the upload is 
+done, you instead get a quick response in the form of an `UploadFileJob` ID that you can pass to the `upload_info()`
+function to check its status to find out when the upload is done (or failed). (This is called _polling_ the host to ask
+the status.) Here we poll every second using a helper function.
+
+```{r}
+busy_poll_upload_file_job <- function(upload_file_job_id) {
+    cat(paste0("polling for status change. upload_file_job: ", upload_file_job_id, "\n"))
+    while (TRUE) {
+        status <- upload_info(conn, upload_file_job_id)$status
+        cat(paste0(status, "\n"))
+        if (status == "FAILED") {
+            cat(paste0("x failed\n"))
+            break
+        }
+        if (status == "SUCCESS") {
+            break
+        }
+        Sys.sleep(1)
+    }
+}
+```
+
+
+```{r}
+forecast_csv_file <- Sys.getenv("FORECAST_CSV_FILE")
+upload_file_job_id <- upload_forecast(conn, model_id, timezero_date_str, forecast_csv_file)
+busy_poll_upload_file_job(upload_file_job_id)
+```
+
+
+And here's the upload's final information:
+
+```{r}
+the_upload_info <- upload_info(conn, upload_file_job_id)
+str(the_upload_info)
+```
+
+
+## Print information about the newly-uploaded forecast
+
+Hopefully you'll see some number of "QUEUED" entries followed by a "SUCCESS" one. Now let's get the new forecast's
+information.
+
+Due to there being multiple kinds of files you might upload to Zoltar (including project truth, project template, and
+model forecasts), the API returns information about uploaded files in the `$output_json` field of successful upload
+job's info. For newly-uploaded forecasts, that field contains a `$forecast_pk` field.
+
+```{r}
+
+new_forecast_id <- upload_info(conn, upload_file_job_id)$output_json$forecast_pk
+the_forecast_info <- forecast_info(conn, new_forecast_id)
+str(the_forecast_info)
+```
+
+
+## Look at the model's forecast list to see the new forecast
+
+Finally, let's again examine the model's forecasts and notice the new one is there.
+
+```{r}
+the_forecasts <- forecasts(conn, model_id)
+str(the_forecasts)
