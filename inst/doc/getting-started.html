@@ -12,7 +12,7 @@
 
 <meta name="author" content="Matthew Cornell" />
 
-<meta name="date" content="2019-05-16" />
+<meta name="date" content="2019-05-28" />
 
 <title>Getting Started</title>
 
@@ -95,7 +95,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Getting Started</h1>
 <h4 class="author">Matthew Cornell</h4>
-<h4 class="date">2019-05-16</h4>
+<h4 class="date">2019-05-28</h4>
 
 
 
@@ -110,7 +110,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(zoltr)
 conn &lt;-<span class="st"> </span><span class="kw">new_connection</span>()
 conn
-<span class="co">#&gt; ZoltarConnection 'http://zoltardata.com' (no session)</span></code></pre></div>
+<span class="co">#&gt; ZoltarConnection 'https://zoltardata.com' not authenticated</span></code></pre></div>
 </div>
 <div id="get-a-list-of-all-projects-on-the-host" class="section level2">
 <h2>Get a list of all projects on the host</h2>
@@ -119,7 +119,7 @@ conn
 <span class="kw">str</span>(the_projects)
 <span class="co">#&gt; 'data.frame':    1 obs. of  8 variables:</span>
 <span class="co">#&gt;  $ id         : int 4</span>
-<span class="co">#&gt;  $ url        : chr &quot;http://zoltardata.com/api/project/4/&quot;</span>
+<span class="co">#&gt;  $ url        : chr &quot;https://zoltardata.com/api/project/4/&quot;</span>
 <span class="co">#&gt;  $ owner_id   : int 5</span>
 <span class="co">#&gt;  $ public     : logi TRUE</span>
 <span class="co">#&gt;  $ name       : chr &quot;CDC Flu challenge&quot;</span>
@@ -127,8 +127,8 @@ conn
 <span class="co">#&gt;  $ home_url   : chr &quot;https://github.com/FluSightNetwork/cdc-flusight-ensemble&quot;</span>
 <span class="co">#&gt;  $ core_data  : chr &quot;https://github.com/FluSightNetwork/cdc-flusight-ensemble/tree/master/model-forecasts/component-models&quot;</span></code></pre></div>
 </div>
-<div id="get-a-project-to-work-with-and-then-list-its-info-and-models" class="section level2">
-<h2>Get a project to work with and then list its info and models</h2>
+<div id="get-a-project-to-work-with-list-its-info-and-models-and-download-its-scores" class="section level2">
+<h2>Get a project to work with, list its info and models, and download its scores</h2>
 <p>Let’s start by getting a public project to work with. We will search the projects list for it by name. Then we will pass its ID to the <code>project_info()</code> function to get details, and pass it to the <code>models()</code> function to get a data.frame of its models.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">project_id &lt;-<span class="st"> </span>the_projects[the_projects<span class="op">$</span>name <span class="op">==</span><span class="st"> &quot;CDC Flu challenge&quot;</span>, <span class="st">'id'</span>]  <span class="co"># integer(0) if not found, which is an invalid project ID</span>
 the_project_info &lt;-<span class="st"> </span><span class="kw">project_info</span>(conn, project_id)
@@ -145,13 +145,31 @@ the_models &lt;-<span class="st"> </span><span class="kw">models</span>(conn, pr
 <span class="kw">str</span>(the_models)
 <span class="co">#&gt; 'data.frame':    21 obs. of  8 variables:</span>
 <span class="co">#&gt;  $ id          : int  12 26 25 24 23 11 10 18 20 21 ...</span>
-<span class="co">#&gt;  $ url         : chr  &quot;http://zoltardata.com/api/model/12/&quot; &quot;http://zoltardata.com/api/model/26/&quot; &quot;http://zoltardata.com/api/model/25/&quot; &quot;http://zoltardata.com/api/model/24/&quot; ...</span>
+<span class="co">#&gt;  $ url         : chr  &quot;https://zoltardata.com/api/model/12/&quot; &quot;https://zoltardata.com/api/model/26/&quot; &quot;https://zoltardata.com/api/model/25/&quot; &quot;https://zoltardata.com/api/model/24/&quot; ...</span>
 <span class="co">#&gt;  $ project_id  : int  4 4 4 4 4 4 4 4 4 4 ...</span>
 <span class="co">#&gt;  $ owner_id    : int  5 5 5 5 5 5 5 5 5 5 ...</span>
 <span class="co">#&gt;  $ name        : chr  &quot;Rank Histogram Filter SIRS&quot; &quot;SARIMA model with seasonal differencing&quot; &quot;SARIMA model without seasonal differencing&quot; &quot;Kernel Density Estimation&quot; ...</span>
 <span class="co">#&gt;  $ description : chr  &quot;&lt;em&gt;Team name&lt;/em&gt;: CU.\n        &lt;em&gt;Team members&lt;/em&gt;: J Shaman, T Yamana, S Kandula, S Pei, W Yang, H Morita.&quot;| __truncated__ &quot;&lt;em&gt;Team name&lt;/em&gt;: ReichLab.\n        &lt;em&gt;Team members&lt;/em&gt;: Evan L. Ray, Nicholas G. Reich.\n        &lt;em&gt;Data&quot;| __truncated__ &quot;&lt;em&gt;Team name&lt;/em&gt;: ReichLab.\n        &lt;em&gt;Team members&lt;/em&gt;: Evan L. Ray, Nicholas G. Reich.\n        &lt;em&gt;Data&quot;| __truncated__ &quot;&lt;em&gt;Team name&lt;/em&gt;: ReichLab.\n        &lt;em&gt;Team members&lt;/em&gt;: Evan L. Ray, Nicholas G. Reich.\n        &lt;em&gt;Data&quot;| __truncated__ ...</span>
 <span class="co">#&gt;  $ home_url    : chr  &quot;https://github.com/FluSightNetwork/cdc-flusight-ensemble/tree/master/model-forecasts/component-models/CU_RHF_SIRS&quot; &quot;https://github.com/FluSightNetwork/cdc-flusight-ensemble/tree/master/model-forecasts/component-models/ReichLab_&quot;| __truncated__ &quot;https://github.com/FluSightNetwork/cdc-flusight-ensemble/tree/master/model-forecasts/component-models/ReichLab_&quot;| __truncated__ &quot;https://github.com/FluSightNetwork/cdc-flusight-ensemble/tree/master/model-forecasts/component-models/ReichLab_kde&quot; ...</span>
-<span class="co">#&gt;  $ aux_data_url: logi  NA NA NA NA NA NA ...</span></code></pre></div>
+<span class="co">#&gt;  $ aux_data_url: logi  NA NA NA NA NA NA ...</span>
+
+score_data &lt;-<span class="st"> </span><span class="kw">scores</span>(conn, project_id)
+score_data
+<span class="co">#&gt; # A tibble: 259,820 x 10</span>
+<span class="co">#&gt;    model timezero season location target   error abs_error log_single_bin</span>
+<span class="co">#&gt;    &lt;chr&gt;    &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;          &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 Baye… 20101024 2010-… HHS Reg… Seaso… -0.878     0.878           -3.62</span>
+<span class="co">#&gt;  2 Baye… 20101024 2010-… HHS Reg… 1 wk … -0.196     0.196           -1.37</span>
+<span class="co">#&gt;  3 Baye… 20101024 2010-… HHS Reg… 2 wk … -0.243     0.243           -2.39</span>
+<span class="co">#&gt;  4 Baye… 20101024 2010-… HHS Reg… 3 wk … -0.0948    0.0948          -1.99</span>
+<span class="co">#&gt;  5 Baye… 20101024 2010-… HHS Reg… 4 wk … -0.0791    0.0791          -2.35</span>
+<span class="co">#&gt;  6 Baye… 20101024 2010-… HHS Reg… Seaso… -0.422     0.422           -3.47</span>
+<span class="co">#&gt;  7 Baye… 20101024 2010-… HHS Reg… 1 wk … -0.278     0.278           -1.10</span>
+<span class="co">#&gt;  8 Baye… 20101024 2010-… HHS Reg… 2 wk … -0.105     0.105           -4.77</span>
+<span class="co">#&gt;  9 Baye… 20101024 2010-… HHS Reg… 3 wk … -0.270     0.270           -2.76</span>
+<span class="co">#&gt; 10 Baye… 20101024 2010-… HHS Reg… 4 wk … -0.446     0.446           -4.40</span>
+<span class="co">#&gt; # … with 259,810 more rows, and 2 more variables: log_multi_bin &lt;dbl&gt;,</span>
+<span class="co">#&gt; #   pit &lt;dbl&gt;</span></code></pre></div>
 </div>
 <div id="get-a-model-to-work-with-and-then-list-its-info-and-forecasts-if-any" class="section level2">
 <h2>Get a model to work with and then list its info and forecasts (if any)</h2>
@@ -169,7 +187,7 @@ the_forecasts &lt;-<span class="st"> </span><span class="kw">forecasts</span>(co
 <span class="kw">str</span>(the_forecasts)
 <span class="co">#&gt; 'data.frame':    225 obs. of  4 variables:</span>
 <span class="co">#&gt;  $ id               : int  4539 4540 4541 4542 4543 4544 4545 4546 4547 4548 ...</span>
-<span class="co">#&gt;  $ url              : chr  &quot;http://zoltardata.com/api/forecast/4539/&quot; &quot;http://zoltardata.com/api/forecast/4540/&quot; &quot;http://zoltardata.com/api/forecast/4541/&quot; &quot;http://zoltardata.com/api/forecast/4542/&quot; ...</span>
+<span class="co">#&gt;  $ url              : chr  &quot;https://zoltardata.com/api/forecast/4539/&quot; &quot;https://zoltardata.com/api/forecast/4540/&quot; &quot;https://zoltardata.com/api/forecast/4541/&quot; &quot;https://zoltardata.com/api/forecast/4542/&quot; ...</span>
 <span class="co">#&gt;  $ timezero_date    : Date, format: &quot;2010-10-24&quot; &quot;2010-10-31&quot; ...</span>
 <span class="co">#&gt;  $ data_version_date: Date, format: &quot;2010-11-08&quot; &quot;2010-11-15&quot; ...</span></code></pre></div>
 </div>

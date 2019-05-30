@@ -28,6 +28,9 @@ the_project_info$description
 the_models <- models(conn, project_id)  # may take some time
 str(the_models)
 
+score_data <- scores(conn, project_id)
+score_data
+
 ## ------------------------------------------------------------------------
 model_id <- the_models[the_models$name == "SARIMA model with seasonal differencing", 'id']  # integer(0) if not found
 the_model_info <- model_info(conn, model_id)

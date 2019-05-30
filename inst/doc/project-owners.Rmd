@@ -1,7 +1,7 @@
 ---
 title: "Project Owners"
 author: "Matthew Cornell"
-date: "2019-05-16"
+date: "2019-05-28"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Project Owners}
@@ -40,11 +40,19 @@ before starting you should:
 ## Connect to the host and authenticate
 
 To access your project, you'll first need to authenticate via the `zoltar_authenticate()` function. Pass it the username
-and password for your account. Note that currently Zoltar uses a five minute timeout on the underlying JWT tokens used
-under the hood, which means you'll have to re-authenticate after that time.
+and password for your account. Notes:
 
-(Note: Below you will see the host shown as _127.0.0.1:8000_ - this is a temporary one that was used to run this 
-documentation against.)
+- Be careful to store and use your username and password so that they're not accessible to others. A good practice is to
+  put them them in your `.Renviron` file and then use `Sys.getenv()` to retrieve them, as outlined in
+  [Use Environment variables](https://db.rstudio.com/best-practices/managing-credentials/#use-environment-variables) and
+  as done below.
+- The Zoltar service uses a "token"-based scheme for authentication. These tokens have a five minute expiration for
+  security, which requires re-authentication after that period of time. The zoltr library takes care of 
+  re-authenticating as needed by passing your username and password back to the server to get another token. Note that
+  the connection object returned by the `new_connection` function stores a token internally, so be careful if saving
+  that object into a file.
+- Below you will see the host shown as _127.0.0.1:8000_ - this is a temporary one that was used to generate this 
+  documentation.
 
 
 <!-- run but don't show. NB: will run only if above eval=TRUE -->

@@ -3,9 +3,10 @@
 zoltr - An R client for the Zoltar data repository API
 ======================================================
 
-<!-- badges: start -->
-<!-- badges: end -->
-This package contains functions for working with the [https://www.zoltardata.com/](Zoltar) forecast repository's API, including projects, models, forecasts, and scores. Read more at the [zoltr pkgdown site](http://reichlab.io/zoltr/).
+Overview
+--------
+
+This package contains functions for working with the [Zoltar](https://www.zoltardata.com/) forecast repository's API, including projects, models, forecasts, and scores. Read more at the [zoltr pkgdown site](http://reichlab.io/zoltr/).
 
 Installation
 ------------
@@ -26,13 +27,13 @@ devtools::install_github("reichlab/zoltr")
 Usage
 -----
 
-Read more at the [zoltr pkgdown site](http://reichlab.io/zoltr/), but briefly you use the `new_connection()` function to create a connection to [https://www.zoltardata.com/](Zoltar) and then pass that connection along with the *ID* of the resource of interest (e.g., a project, model, or forecast) to this package's various functions like `projects()`, `project_info()`, or `scores()`.
+Read more at the [zoltr pkgdown site](http://reichlab.io/zoltr/), but briefly you use the `new_connection()` function to create a connection to [Zoltar](https://www.zoltardata.com/) and then pass that connection along with the *ID* of the resource of interest (e.g., a project, model, or forecast) to this package's various functions like `projects()`, `project_info()`, or `scores()`.
 
 ``` r
 library(zoltr)
 conn <- new_connection()
 conn
-#> ZoltarConnection 'http://zoltardata.com' (no session)
+#> ZoltarConnection 'https://zoltardata.com' not authenticated
 
 the_projects <- projects(conn)
 project_id <- the_projects[1,]$id
