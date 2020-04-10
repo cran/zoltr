@@ -1,8 +1,11 @@
-# zoltr 0.2.2
+# zoltr 0.5.0
+- Updated entire package to be compatible with Zoltar 3.
+
+
+# zoltr# zoltr 0.2.2
 - Added automatic re-authentication of expired tokens
 
 
-- Made changes to avoid CRAN NOTE:
 # zoltr 0.2.1
 - Made changes to avoid CRAN NOTE:
 

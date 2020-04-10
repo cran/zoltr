@@ -1,4 +1,4 @@
-## ---- include = FALSE----------------------------------------------------
+## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -7,72 +7,62 @@ knitr::opts_chunk$set(
   eval = nzchar(Sys.getenv("IS_DEVELOPMENT_MACHINE"))
 )
 
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 library(httr)  # o/w devtools::check() gets `could not find function "POST"` error
 
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 library(zoltr)
-conn <- new_connection(host = Sys.getenv("HOST"))
-zoltar_authenticate(conn, Sys.getenv("USERNAME"), Sys.getenv("PASSWORD"))
-conn
+zoltar_connection <- new_connection(host = Sys.getenv("Z_HOST"))
+zoltar_authenticate(zoltar_connection, Sys.getenv("Z_USERNAME"), Sys.getenv("Z_PASSWORD"))
 
-## ---- eval=FALSE, include=TRUE-------------------------------------------
+## ---- eval=FALSE, include=TRUE------------------------------------------------
 #  library(zoltr)
-#  conn <- new_connection()
-#  zoltar_authenticate(conn, Sys.getenv("USERNAME"), Sys.getenv("PASSWORD"))
-#  conn
+#  zoltar_connection <- new_connection()
+#  zoltar_authenticate(zoltar_connection, Sys.getenv("Z_USERNAME"), Sys.getenv("Z_PASSWORD"))
 
-## ------------------------------------------------------------------------
-the_projects <- projects(conn)
-project_id <- the_projects[the_projects$name == Sys.getenv("PROJECT_NAME"), 'id']  # integer(0) if not found, which is an invalid project ID
-the_models <- models(conn, project_id)
-model_id <- the_models[the_models$name == Sys.getenv("MODEL_NAME"), 'id']  # integer(0) if not found
-the_forecasts <- forecasts(conn, model_id)
-str(the_forecasts)
+## -----------------------------------------------------------------------------
+project_config <- jsonlite::read_json("docs-project.json")  # "name": "My project"
+project_url <- create_project(zoltar_connection, project_config)
+the_project_info <- project_info(zoltar_connection, project_url)
 
-## ------------------------------------------------------------------------
-timezero_date_str <- Sys.getenv("TIMEZERO_DATE")
-timezero_date <- as.Date(timezero_date_str, format = "%Y%m%d")  # YYYYMMDD
-existing_forecast_id <- the_forecasts[the_forecasts$timezero_date == timezero_date, 'id']
+## -----------------------------------------------------------------------------
+model_config <- list("name" = "a model_name",
+                     "abbreviation" = "an abbreviation",
+                     "team_name" = "a team_name",
+                     "description" = "a description",
+                     "home_url" = "http://example.com/",
+                     "aux_data_url" = "http://example.com/")
+model_url <- create_model(zoltar_connection, project_url, model_config)
 
-the_forecast_info <- forecast_info(conn, existing_forecast_id)  # `Not Found (HTTP 404)` this if forecast doesn't exist 
-str(the_forecast_info)
-
-delete_forecast(conn, the_forecast_info$id)
-
-## ------------------------------------------------------------------------
-busy_poll_upload_file_job <- function(upload_file_job_id) {
-    cat(paste0("polling for status change. upload_file_job: ", upload_file_job_id, "\n"))
-    while (TRUE) {
-        status <- upload_info(conn, upload_file_job_id)$status
-        cat(paste0(status, "\n"))
-        if (status == "FAILED") {
-            cat(paste0("x failed\n"))
-            break
-        }
-        if (status == "SUCCESS") {
-            break
-        }
-        Sys.sleep(1)
+## -----------------------------------------------------------------------------
+busy_poll_upload_file_job <- function(zoltar_connection, upload_file_job_url) {
+  cat(paste0("polling for status change. upload_file_job: ", upload_file_job_url, "\n"))
+  while (TRUE) {
+    status <- upload_info(zoltar_connection, upload_file_job_url)$status
+    cat(paste0(status, "\n"))
+    if (status == "FAILED") {
+      cat(paste0("x failed\n"))
+      break
     }
+    if (status == "SUCCESS") {
+      break
+    }
+    Sys.sleep(1)
+  }
 }
 
-## ------------------------------------------------------------------------
-forecast_csv_file <- Sys.getenv("FORECAST_CSV_FILE")
-upload_file_job_id <- upload_forecast(conn, model_id, timezero_date_str, forecast_csv_file)
-busy_poll_upload_file_job(upload_file_job_id)
+## -----------------------------------------------------------------------------
+forecast_data <- jsonlite::read_json("docs-predictions.json")
+upload_file_job_url <- upload_forecast(zoltar_connection, model_url, "2011-10-02", forecast_data)
+busy_poll_upload_file_job(zoltar_connection, upload_file_job_url)
 
-## ------------------------------------------------------------------------
-the_upload_info <- upload_info(conn, upload_file_job_id)
-str(the_upload_info)
-
-## ------------------------------------------------------------------------
-
-new_forecast_id <- upload_info(conn, upload_file_job_id)$output_json$forecast_pk
-the_forecast_info <- forecast_info(conn, new_forecast_id)
-str(the_forecast_info)
-
-## ------------------------------------------------------------------------
-the_forecasts <- forecasts(conn, model_id)
+## -----------------------------------------------------------------------------
+the_upload_info <- upload_info(zoltar_connection, upload_file_job_url)
+forecast_url <- upload_info_forecast_url(zoltar_connection, the_upload_info)
+the_forecast_info <- forecast_info(zoltar_connection, forecast_url)
+the_forecasts <- forecasts(zoltar_connection, the_forecast_info$forecast_model_url)
 str(the_forecasts)
+
+## -----------------------------------------------------------------------------
+delete_project(zoltar_connection, project_url)
 
