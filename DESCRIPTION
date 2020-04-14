@@ -1,6 +1,6 @@
 Package: zoltr
 Title: Interface to the 'Zoltar' Forecast Repository API
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: c(
     person("Matthew", "Cornell", role = c("aut", "cre"), email = "cornell@umass.edu"),
     person("Nicholas", "Reich", role = c("aut", "cph"), email = "nick@schoolph.umass.edu"))
@@ -20,9 +20,9 @@ Imports: httr, jsonlite, readr, mockery, webmockr, base64url, dplyr,
 RoxygenNote: 7.1.0
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2020-04-09 19:31:23 UTC; cornell
+Packaged: 2020-04-14 19:48:35 UTC; cornell
 Author: Matthew Cornell [aut, cre],
   Nicholas Reich [aut, cph]
 Maintainer: Matthew Cornell <cornell@umass.edu>
 Repository: CRAN
-Date/Publication: 2020-04-10 07:10:02 UTC
+Date/Publication: 2020-04-15 00:20:03 UTC

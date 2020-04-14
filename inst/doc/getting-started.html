@@ -105,11 +105,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p><strong>NOTE: You will need an account to access the zoltar API - please see <a href="https://docs.zoltardata.com/">docs.zoltardata.com</a> for details.</strong></p>
 <div id="connect-to-the-host-and-authenticate" class="section level2">
 <h2>Connect to the host and authenticate</h2>
-<p>The starting point for working with Zoltar’s API is a <code>ZoltarConnection</code> object, obtained via the <code>new_connection</code> function. Most zoltr functions take a <code>ZoltarConnection</code> along with the API <em>URL</em> of the thing of interest, e.g., a project, model, or forecast. API URLs look like <code>https://www.zoltardata.com/api/project/3/</code>, which is that of the <a href="https://www.zoltardata.com/project/3">Docs Example Project</a>. An important note regarding URLs:</p>
+<p>The starting point for working with Zoltar’s API is a <code>ZoltarConnection</code> object, obtained via the <code>new_connection</code> function. Most zoltr functions take a <code>ZoltarConnection</code> along with the API <em>URL</em> of the thing of interest, e.g., a project, model, or forecast. API URLs look like <code>https://www.zoltardata.com/api/project/3/</code>, which is that of the “Docs Example Project”. An important note regarding URLs:</p>
 <pre><code>zoltr's convention for URLs is to require a trailing slash character ('/') on all URLs. The only exception is the
 optional `host` parameter passed to `new_connection()`. Thus, `https://www.zoltardata.com/api/project/3/` is valid,
 but `https://www.zoltardata.com/api/project/3` is not.</code></pre>
-<p>You can obtain a URL using some of the <code>*_info</code> functions, and you can always use the web interface to navigate to the item of interest and look at its URL in the browser address field. Keep in mind that you’ll need to add <code>api</code> to the browsable address, along with the trailing slash character. For example, you’d browse the <em>Docs Example Project</em> project at <code>https://www.zoltardata.com/project/3</code>, but it’s API for use in zoltr would be <code>https://www.zoltardata.com/api/project/3/</code>.</p>
+<p>You can obtain a URL using some of the <code>*_info</code> functions, and you can always use the web interface to navigate to the item of interest and look at its URL in the browser address field. Keep in mind that you’ll need to add <code>api</code> to the browsable address, along with the trailing slash character. For example, if you browsed the <em>Docs Example Project</em> project at (say) <code>https://www.zoltardata.com/project/3</code> then its API for use in zoltr would be <code>https://www.zoltardata.com/api/project/3/</code>.</p>
 <p>As noted above, all API calls require an account. To access your project, you’ll first need to authenticate via the <code>zoltar_authenticate()</code> function. Pass it the username and password for your account. Notes:</p>
 <ul>
 <li>Be careful to store and use your username and password so that they’re not accessible to others. A good practice is to put them them in your <code>.Renviron</code> file and then use <code>Sys.getenv()</code> to retrieve them, as outlined in <a href="https://db.rstudio.com/best-practices/managing-credentials/#use-environment-variables">Use Environment variables</a> and as done below.</li>
@@ -131,8 +131,8 @@ zoltar_connection</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">the_projects &lt;-<span class="st"> </span><span class="kw">projects</span>(zoltar_connection)
 <span class="kw">str</span>(the_projects)
 <span class="co">#&gt; 'data.frame':    4 obs. of  10 variables:</span>
-<span class="co">#&gt;  $ id                   : int  5 16 17 18</span>
-<span class="co">#&gt;  $ url                  : chr  &quot;http://127.0.0.1:8000/api/project/5/&quot; &quot;http://127.0.0.1:8000/api/project/16/&quot; &quot;http://127.0.0.1:8000/api/project/17/&quot; &quot;http://127.0.0.1:8000/api/project/18/&quot;</span>
+<span class="co">#&gt;  $ id                   : int  5 232 233 234</span>
+<span class="co">#&gt;  $ url                  : chr  &quot;http://127.0.0.1:8000/api/project/5/&quot; &quot;http://127.0.0.1:8000/api/project/232/&quot; &quot;http://127.0.0.1:8000/api/project/233/&quot; &quot;http://127.0.0.1:8000/api/project/234/&quot;</span>
 <span class="co">#&gt;  $ owner_url            : chr  &quot;http://127.0.0.1:8000/api/user/4/&quot; &quot;http://127.0.0.1:8000/api/user/4/&quot; &quot;http://127.0.0.1:8000/api/user/4/&quot; &quot;http://127.0.0.1:8000/api/user/4/&quot;</span>
 <span class="co">#&gt;  $ public               : logi  FALSE TRUE FALSE TRUE</span>
 <span class="co">#&gt;  $ name                 : chr  &quot;Impetus Province Forecasts&quot; &quot;public project&quot; &quot;private project&quot; &quot;Docs Example Project&quot;</span>
@@ -160,9 +160,9 @@ the_project_info<span class="op">$</span>description
 the_models &lt;-<span class="st"> </span><span class="kw">models</span>(zoltar_connection, project_url)
 <span class="kw">str</span>(the_models)
 <span class="co">#&gt; 'data.frame':    1 obs. of  8 variables:</span>
-<span class="co">#&gt;  $ id          : int 19</span>
-<span class="co">#&gt;  $ url         : chr &quot;http://127.0.0.1:8000/api/model/19/&quot;</span>
-<span class="co">#&gt;  $ project_url : chr &quot;http://127.0.0.1:8000/api/project/18/&quot;</span>
+<span class="co">#&gt;  $ id          : int 230</span>
+<span class="co">#&gt;  $ url         : chr &quot;http://127.0.0.1:8000/api/model/230/&quot;</span>
+<span class="co">#&gt;  $ project_url : chr &quot;http://127.0.0.1:8000/api/project/234/&quot;</span>
 <span class="co">#&gt;  $ owner_url   : logi NA</span>
 <span class="co">#&gt;  $ name        : chr &quot;docs forecast model&quot;</span>
 <span class="co">#&gt;  $ description : chr &quot;&quot;</span>
@@ -189,14 +189,15 @@ the_model_info<span class="op">$</span>name
 
 the_forecasts &lt;-<span class="st"> </span><span class="kw">forecasts</span>(zoltar_connection, model_url)
 <span class="kw">str</span>(the_forecasts)
-<span class="co">#&gt; 'data.frame':    1 obs. of  7 variables:</span>
-<span class="co">#&gt;  $ id                : int 179</span>
-<span class="co">#&gt;  $ url               : chr &quot;http://127.0.0.1:8000/api/forecast/179/&quot;</span>
-<span class="co">#&gt;  $ forecast_model_url: chr &quot;http://127.0.0.1:8000/api/model/19/&quot;</span>
+<span class="co">#&gt; 'data.frame':    1 obs. of  8 variables:</span>
+<span class="co">#&gt;  $ id                : int 185</span>
+<span class="co">#&gt;  $ url               : chr &quot;http://127.0.0.1:8000/api/forecast/185/&quot;</span>
+<span class="co">#&gt;  $ forecast_model_url: chr &quot;http://127.0.0.1:8000/api/model/230/&quot;</span>
 <span class="co">#&gt;  $ source            : chr &quot;docs-predictions.json&quot;</span>
-<span class="co">#&gt;  $ timezero_url      : chr &quot;http://127.0.0.1:8000/api/timezero/61/&quot;</span>
-<span class="co">#&gt;  $ created_at        : Date, format: &quot;2020-04-08&quot;</span>
-<span class="co">#&gt;  $ forecast_data_url : chr &quot;http://127.0.0.1:8000/api/forecast/179/data/&quot;</span></code></pre></div>
+<span class="co">#&gt;  $ timezero_url      : chr &quot;http://127.0.0.1:8000/api/timezero/705/&quot;</span>
+<span class="co">#&gt;  $ created_at        : Date, format: &quot;2020-04-14&quot;</span>
+<span class="co">#&gt;  $ notes             : chr &quot;a small prediction file&quot;</span>
+<span class="co">#&gt;  $ forecast_data_url : chr &quot;http://127.0.0.1:8000/api/forecast/185/data/&quot;</span></code></pre></div>
 </div>
 <div id="finally-download-the-forecasts-data" class="section level2">
 <h2>Finally, download the forecast’s data</h2>
@@ -205,7 +206,7 @@ the_forecasts &lt;-<span class="st"> </span><span class="kw">forecasts</span>(zo
 forecast_info &lt;-<span class="st"> </span><span class="kw">forecast_info</span>(zoltar_connection, forecast_url)
 forecast_data &lt;-<span class="st"> </span><span class="kw">download_forecast</span>(zoltar_connection, forecast_url)
 <span class="kw">length</span>(forecast_data<span class="op">$</span>predictions)
-<span class="co">#&gt; [1] 26</span></code></pre></div>
+<span class="co">#&gt; [1] 29</span></code></pre></div>
 </div>
 </div>
 
