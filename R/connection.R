@@ -14,7 +14,7 @@ url_for_token_auth <- function(zoltar_connection) {
 
 add_auth_headers <- function(zoltar_connection) {
   if (!inherits(zoltar_connection, "ZoltarConnection")) {
-    stop(paste0("zoltar_connection was not a ZoltarConnection: '", zoltar_connection, "'"), call. = FALSE)
+    stop("zoltar_connection was not a ZoltarConnection: '", zoltar_connection, "'", call. = FALSE)
   }
 
   if (inherits(zoltar_connection$session, "ZoltarSession")) {
@@ -25,24 +25,33 @@ add_auth_headers <- function(zoltar_connection) {
 
 #' Get JSON for a resource (URL). Authenticates if necessary
 #'
-#' @return A `list` that contiains JSON information for the passed URL
-#' @param zoltar_connection A `ZoltarConnection` object as returned by \code{\link{new_connection}}
+#' @return A `list` that contains JSON information for the passed URL
+#' @param zoltar_connection A `ZoltarConnection` object as returned by [new_connection()]
 #' @param url A string of the resource's URL
-get_resource <- function(zoltar_connection, url) {
+#' @param col_types Same as readr::read_csv takes
+get_resource <- function(zoltar_connection, url, col_types = NULL) {
   re_authenticate_if_necessary(zoltar_connection)
-  message(paste0("get_resource(): GET: ", url))
+  message("get_resource(): GET: ", url)
   response <- httr::GET(url = url, add_auth_headers(zoltar_connection))
   httr::stop_for_status(response)
-  httr::content(response, as = "parsed", encoding = "UTF-8")
+  if (httr::http_type(response) == "application/json") {
+    jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"), simplifyVector = FALSE)
+  } else if (httr::http_type(response) == "text/csv") {
+    readr::read_csv(httr::content(response, "raw"), col_types = col_types,
+                    locale = readr::locale(encoding = "UTF-8"))
+  } else {
+    stop("un-handled content type: '", httr::http_type(response), "'", call. = FALSE)
+  }
 }
 
 
 # deletes the resource at the passed URL
 delete_resource <- function(zoltar_connection, url) {
   re_authenticate_if_necessary(zoltar_connection)
-  message(paste0("delete_resource(): DELETE: ", url))
+  message("delete_resource(): DELETE: ", url)
   response <- httr::DELETE(url = url, add_auth_headers(zoltar_connection))
   httr::stop_for_status(response)
+  response
 }
 
 
@@ -53,14 +62,14 @@ delete_resource <- function(zoltar_connection, url) {
 #' Get a connection to a Zoltar host
 #'
 #' Returns a new connection object, which is the starting point for working with the Zoltar API. Once you have the
-#' connection you can call \code{\link{zoltar_authenticate}} on it, and then call \code{\link{projects}} to get a list
+#' connection you can call [zoltar_authenticate()] on it, and then call [projects()] to get a list
 #' of Project objects to start working with.
 #'
 #' A note on URLs: We require a trailing slash ('/') on all URLs. The only exception is the host arg passed to this
 #' function. This convention matches Django REST framework one, which is what Zoltar is written in.
 #'
 #' @return A `ZoltarConnection` object
-#' @param host The Zoltar site to connect to. Does *not* include a trailing slash ('/'). Defaults to \url{https://zoltardata.com}
+#' @param host The Zoltar site to connect to. Does *not* include a trailing slash ('/'). Defaults to <https://zoltardata.com>
 #' @export
 #' @examples \dontrun{
 #'   conn <- new_connection()
@@ -89,11 +98,11 @@ print.ZoltarConnection <-
 #' Log in to a Zoltar host
 #'
 #' Returns a new `ZoltarConnection` object, which is the starting point for working with the Zoltar API.
-#' Once you have the connection you can call zoltar_authenticate() on it, and call projects() to get a list of objects
+#' Once you have the connection you can call [zoltar_authenticate()] on it, and call [projects()] to get a list of objects
 #' to start working with.
 #'
 #' @return None
-#' @param zoltar_connection A `ZoltarConnection` object as returned by \code{\link{new_connection}}.
+#' @param zoltar_connection A `ZoltarConnection` object as returned by [new_connection()].
 #' @param username Username for the account to use on the connection's host
 #' @param password Password ""
 #' @export
@@ -102,7 +111,7 @@ print.ZoltarConnection <-
 #' }
 zoltar_authenticate <- function(zoltar_connection, username, password) {
   if (!inherits(zoltar_connection, "ZoltarConnection")) {
-    stop(paste0("zoltar_connection was not a ZoltarConnection: '", zoltar_connection, "'"), call. = FALSE)
+    stop("zoltar_connection was not a ZoltarConnection: '", zoltar_connection, "'", call. = FALSE)
   }
 
   zoltar_connection$username <- username
@@ -113,11 +122,11 @@ zoltar_authenticate <- function(zoltar_connection, username, password) {
 
 re_authenticate_if_necessary <- function(zoltar_connection) {
   if (!inherits(zoltar_connection, "ZoltarConnection")) {
-    stop(paste0("zoltar_connection was not a ZoltarConnection: '", zoltar_connection, "'"), call. = FALSE)
+    stop("zoltar_connection was not a ZoltarConnection: '", zoltar_connection, "'", call. = FALSE)
   }
 
   if (inherits(zoltar_connection$session, "ZoltarSession") && is_token_expired(zoltar_connection$session)) {
-    message(paste0("re-authenticating expired token '", zoltar_connection$host, "'"))
+    message("re-authenticating expired token '", zoltar_connection$host, "'")
     zoltar_authenticate(zoltar_connection, zoltar_connection$username, zoltar_connection$password)
   }
 }
@@ -126,7 +135,7 @@ re_authenticate_if_necessary <- function(zoltar_connection) {
 #' Get information about all projects
 #'
 #' @return A `data.frame` of all projects' contents
-#' @param zoltar_connection A `ZoltarConnection` object as returned by \code{\link{new_connection}}
+#' @param zoltar_connection A `ZoltarConnection` object as returned by [new_connection()]
 #' @export
 #' @examples \dontrun{
 #'   the_projects <- projects(conn)
@@ -140,8 +149,6 @@ projects <- function(zoltar_connection) {
   name_column <- c()                   # character
   description_column <- c()            # ""
   home_url_column <- c()               # ""
-  time_interval_type_column <- c()     # ""
-  visualization_y_label_column <- c()  # ""
   core_data_column <- c()              # ""
   for (project_json in projects_json) {
     id_column <- append(id_column, project_json$id)
@@ -154,14 +161,11 @@ projects <- function(zoltar_connection) {
     name_column <- append(name_column, project_json$name)
     description_column <- append(description_column, project_json$description)
     home_url_column <- append(home_url_column, project_json$home_url)
-    time_interval_type_column <- append(time_interval_type_column, project_json$time_interval_type)
-    visualization_y_label_column <- append(visualization_y_label_column, project_json$visualization_y_label)
     core_data_column <- append(core_data_column, project_json$core_data)
   }
   data.frame(id = id_column, url = url_column, owner_url = owner_url_column, public = is_public_column, name = name_column,
-             description = description_column, home_url = home_url_column,
-             time_interval_type = time_interval_type_column, visualization_y_label=visualization_y_label_column,
-             core_data = core_data_column, stringsAsFactors = FALSE)
+             description = description_column, home_url = home_url_column, core_data = core_data_column,
+             stringsAsFactors = FALSE)
 }
 
 
@@ -183,7 +187,7 @@ new_session <- function(zoltar_connection) {
 get_token <- function(zoltar_session) {
   zoltar_connection <- zoltar_session$zoltar_connection
   token_auth_url <- url_for_token_auth(zoltar_connection)
-  message(paste0("get_token(): POST: ", token_auth_url))
+  message("get_token(): POST: ", token_auth_url)
   response <-
     httr::POST(
       url = token_auth_url,

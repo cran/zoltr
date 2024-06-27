@@ -7,12 +7,12 @@
 create_model(zoltar_connection, project_url, model_config)
 }
 \arguments{
-\item{zoltar_connection}{A `ZoltarConnection` object as returned by \code{\link{new_connection}}}
+\item{zoltar_connection}{A \code{ZoltarConnection} object as returned by \code{\link[=new_connection]{new_connection()}}}
 
 \item{project_url}{url of a project in zoltar_connection's projects. this is the project the new model will be created
 in}
 
-\item{model_config}{A `list` containing a Zoltar model configuration. An example: example-model-config.json .
+\item{model_config}{A \code{list} containing a Zoltar model configuration. An example: example-model-config.json .
 Full documentation at \url{https://docs.zoltardata.com/}.}
 }
 \value{
@@ -23,7 +23,7 @@ Creates the model in the passed project using the passed list. Fails if a model 
 }
 \examples{
 \dontrun{
-  new_model_url <- create_model(conn, "https://www.zoltardata.com/project/9/",
+  new_model_url <- create_model(conn, "https://www.zoltardata.com/api/project/9/",
                      jsonlite::read_json("example-model-config.json"))
 }
 }

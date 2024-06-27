@@ -7,7 +7,7 @@ BIN_PREDICTION_CLASS <- "bin"  # "" bin ""
 #'
 #' @return cdc_csv_file's data as Zoltar's native `list` format, but only the "predictions" item, and not "meta"
 #' @param season_start_year An integer specifying the "season" that cdc_csv_file is in. Used to convert EWs to
-#'   YYYY_MM_DD_DATE_FORMAT. zoltr uses week 30 as the season breakpoint, e.g. the "2016/2017 season" starts with
+#'   YYYY_MM_DD_DATE_FORMAT. \pkg{zoltr} uses week 30 as the season breakpoint, e.g. the "2016/2017 season" starts with
 #    EW30-2016 (EWs 30 through 52/53) and ends with EW29-2017 (EWs 01 through 29).
 #' @param cdc_csv_file A CDC CSV file
 #' @export
@@ -22,29 +22,32 @@ forecast_data_from_cdc_csv_file <- function(season_start_year, cdc_csv_file) {
 
 #
 # Recall the seven cdc-project.json targets and their types:
-# -------------------------+-------------------------------+-----------+-----------+---------------------
-# Target name              | target_type                   | unit      | data_type | step_ahead_increment
-# -------------------------+-------------------------------+-----------+-----------+---------------------
-# "Season onset"           | Target.NOMINAL_TARGET_TYPE    | n/a (week)| date      | n/a
-# "Season peak week"       | Target.DATE_TARGET_TYPE       | "week"    | text      | n/a
-# "Season peak percentage" | Target.CONTINUOUS_TARGET_TYPE | "percent" | float     | n/a
-# "1 wk ahead"             | Target.CONTINUOUS_TARGET_TYPE | "percent" | float     | 1
-# "2 wk ahead"             | ""                            | ""        | ""        | 2
-# "3 wk ahead"             | ""                            | ""        | ""        | 3
-# "4 wk ahead"             | ""                            | ""        | ""        | 4
-# -------------------------+-------------------------------+-----------+-----------+---------------------
+# -------------------------+-------------------------------+--------------------------+-----------+----------------
+# Target name              | target_type                   | outcome_variable         | data_type | numeric_horizon
+# -------------------------+-------------------------------+--------------------------+-----------+----------------
+# "Season onset"           | Target.NOMINAL_TARGET_TYPE    | "season onset"           | date      | n/a
+# "Season peak week"       | Target.DATE_TARGET_TYPE       | "season peak week"       | text      | n/a
+# "Season peak percentage" | Target.CONTINUOUS_TARGET_TYPE | "season peak percentage" | float     | n/a
+# "1 wk ahead"             | Target.CONTINUOUS_TARGET_TYPE | "ILI percent"            | float     | 1
+# "2 wk ahead"             | ""                            | ""                       | ""        | 2
+# "3 wk ahead"             | ""                            | ""                       | ""        | 3
+# "4 wk ahead"             | ""                            | ""                       | ""        | 4
+# -------------------------+-------------------------------+--------------------------+-----------+----------------
 #
 # Note that the "Season onset" target is nominal and not date. This is due to how the CDC decided to represent the
 # case when predicting no season onset, i.e., the threshold is not exceeded. This is done via a "none" bin where
 # both Bin_start_incl and Bin_end_notincl are the strings "none" and not an EW week number. Thus, we have to store
-# all bin starts as strings and not dates.
+# all bin starts as strings and not dates. At one point the lab was going to represent this case by splitting the
+# "Season onset" target into two: "season_onset_binary" (a Target.BINARY that indicates whether there is an onset or
+# not) and "season_onset_date" (a Target.DATE_TARGET_TYPE that is the onset date if "season_onset_binary" is true).
+# But we dropped that idea and stayed with the original single nominal target.
 #
 
 
-#' `forecast_data_from_cdc_csv_file()`helper
+#' [forecast_data_from_cdc_csv_file()] helper
 #'
-#' @return same as `forecast_data_from_cdc_csv_file()`
-#' @param season_start_year as passed to `forecast_data_from_cdc_csv_file()`
+#' @return same as [forecast_data_from_cdc_csv_file()]
+#' @param season_start_year as passed to [forecast_data_from_cdc_csv_file()]
 #' @param cdc_data_frame ""
 #' @importFrom rlang .data
 forecast_data_from_cdc_data_frame <- function(season_start_year, cdc_data_frame) {  # testable internal function that does the work
@@ -62,13 +65,13 @@ forecast_data_from_cdc_data_frame <- function(season_start_year, cdc_data_frame)
 
   predictions <- list()
   cdc_data_frame_grouped <- cdc_data_frame %>%
-    dplyr::group_by(.data$location, .data$target, .data$type) %>%
+    dplyr::group_by(.data[["location"]], .data[["target"]], .data[["type"]]) %>%
     dplyr::group_data()
   for (group_idx in seq_len(nrow(cdc_data_frame_grouped))) {
     group_row <- cdc_data_frame_grouped[group_idx,]  # group_row$location,  group_row$target,  group_row$type
     if (!group_row$target %in% c("Season onset", "Season peak week", "Season peak percentage",
                                  "1 wk ahead", "2 wk ahead", "3 wk ahead", "4 wk ahead")) {
-      stop(paste0("invalid target_name: '", group_row$target, "'"), call. = FALSE)
+      stop("invalid target_name: '", group_row$target, "'", call. = FALSE)
     }
 
     point_values <- list()  # NB: should only be one point row, but collect all (but don't validate here)
@@ -98,7 +101,7 @@ forecast_data_from_cdc_data_frame <- function(season_start_year, cdc_data_frame)
     # add the actual prediction dicts
     if (length(point_values) > 0) {  # yes warning
       if (length(point_values) > 1) {
-        stop(paste0("length(point_values) > 1: ", point_values), call. = FALSE)
+        stop("length(point_values) > 1: ", point_values, call. = FALSE)
       }
 
       point_value <- point_values[[1]]
@@ -138,7 +141,7 @@ process_csv_point_row <- function(season_start_year, target_name, value) {
       strftime(monday_date, YYYY_MM_DD_DATE_FORMAT)
     }
   } else if (is.na(value)) {
-    stop(paste0("None point values are only valid for 'Season onset' targets. target_name='", target_name, "'"),
+    stop("None point values are only valid for 'Season onset' targets. target_name='", target_name, "'",
          call. = FALSE)
   } else if (target_name == 'Season peak week') {  # date target. value: an EW Monday date
     # same 'wrapping' logic as above to handle rounding boundaries
@@ -165,13 +168,13 @@ process_csv_bin_row <- function(season_start_year, target_name, value, bin_start
       monday_date <- monday_date_from_ew_and_season_start_year(bin_start_incl, season_start_year)
       list(strftime(monday_date, YYYY_MM_DD_DATE_FORMAT), value)
     } else {
-      stop(paste0("got 'Season onset' row but not both start and end were None. bin_start_incl=", bin_start_incl,
-                  ", bin_end_notincl=", bin_end_notincl),
+      stop("got 'Season onset' row but not both start and end were None. bin_start_incl=", bin_start_incl,
+           ", bin_end_notincl=", bin_end_notincl,
            call. = FALSE)
     }
   } else if (is.na(bin_start_incl) || is.na(bin_end_notincl)) {
-    stop(paste0("None bins are only valid for 'Season onset' targets. target_name='", target_name, "', ",
-                ". bin_start_incl, bin_end_notincl: ", bin_start_incl, ", ", bin_end_notincl),
+    stop("None bins are only valid for 'Season onset' targets. target_name='", target_name, "', ",
+         ". bin_start_incl, bin_end_notincl: ", bin_start_incl, ", ", bin_end_notincl,
          call. = FALSE)
   } else if (target_name == 'Season peak week') {  # date target. value: an EW Monday date
     monday_date <- monday_date_from_ew_and_season_start_year(bin_start_incl, season_start_year)

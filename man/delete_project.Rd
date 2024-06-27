@@ -7,7 +7,7 @@
 delete_project(zoltar_connection, project_url)
 }
 \arguments{
-\item{zoltar_connection}{A `ZoltarConnection` object as returned by \code{\link{new_connection}}}
+\item{zoltar_connection}{A \code{ZoltarConnection} object as returned by \code{\link[=new_connection]{new_connection()}}}
 
 \item{project_url}{URL of a project in zoltar_connection's projects}
 }
@@ -19,6 +19,6 @@ Deletes the project with the passed URL. This is permanent and cannot be undone.
 }
 \examples{
 \dontrun{
-  delete_project(conn, "https://www.zoltardata.com/project/9/")
+  delete_project(conn, "https://www.zoltardata.com/api/project/9/")
 }
 }

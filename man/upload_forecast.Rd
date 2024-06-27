@@ -9,31 +9,35 @@ upload_forecast(
   model_url,
   timezero_date,
   forecast_data,
+  is_json = TRUE,
   notes = ""
 )
 }
 \arguments{
-\item{zoltar_connection}{A `ZoltarConnection` object as returned by \code{\link{new_connection}}}
+\item{zoltar_connection}{A \code{ZoltarConnection} object as returned by \code{\link[=new_connection]{new_connection()}}}
 
 \item{model_url}{URL of a model in zoltar_connection's projects}
 
 \item{timezero_date}{The date of the project timezero you are uploading for. it is a string in format YYYYMMDD}
 
-\item{forecast_data}{Forecast data as a `list` in the Zoltar standard format}
+\item{forecast_data}{Forecast data to upload data to upload, either a \code{list} (if is_json==TRUE) or a \code{dataframe}
+otherwise. formats are documented at https://docs.zoltardata.com/}
+
+\item{is_json}{TRUE if forecast_data is JSON (list) format, and FALSE if it is CSV (dataframe) format}
 
 \item{notes}{Optional user notes for the new forecast}
 }
 \value{
-An UploadFileJob URL for the upload
+A Job URL for the upload
 }
 \description{
-This function submits forecast data to the server for uploading. Returns an UploadFileJob object that can be used to
-up, which depends on the number of current uploads in the queue. Zoltar tracks these via `UploadFileJob` objects.)
+This function submits forecast data to the server for uploading. Returns a Job object that can be used to
+up, which depends on the number of current uploads in the queue. Zoltar tracks these via \code{Job} objects.)
 }
 \examples{
 \dontrun{
   forecast_data <- jsonlite::read_json("docs-predictions.json")
-  upload_file_job_url <- upload_forecast(conn, "http://www.zoltardata.com/api/model/1/",
-                                         "2017-01-17", forecast_data, "a mid-January forecast")
+  job_url <- upload_forecast(conn, "http://www.zoltardata.com/api/model/1/",
+                             "2017-01-17", forecast_data, TRUE, "a mid-January forecast")
 }
 }
